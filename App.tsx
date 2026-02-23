@@ -128,7 +128,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex flex-col">
             <span className="text-lg font-black tracking-tighter leading-none text-slate-900">
-              SAFIO<span className="text-red-600">.IN</span>
+              Safio<span className="text-red-600">.in</span>
             </span>
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Premium Guards</span>
           </div>
