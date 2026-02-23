@@ -10,7 +10,7 @@ export interface Product {
   description: string;
   features: string[];
   imageUrl: string;
-  stock: Record<string, number>; // model: quantity
+  stock: Record<string, number>; // screenSize: quantity
 }
 
 export interface CartItem {
@@ -18,7 +18,7 @@ export interface CartItem {
   productId: string;
   productName: string;
   type: GuardType;
-  model: string;
+  screenSize: string;
   price: number;
   quantity: number;
   imageUrl: string;
@@ -32,7 +32,7 @@ export interface Order {
   status: 'pending' | 'shipped' | 'delivered';
 }
 
-export interface BrandModels {
+export interface BrandScreenSizes {
   brand: string;
-  models: string[];
+  screenSizes: string[];
 }

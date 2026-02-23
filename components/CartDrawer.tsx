@@ -66,7 +66,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, updateQ
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <p className="text-sm text-slate-500 mb-2">{item.model} • {item.type}</p>
+                      <p className="text-sm text-slate-500 mb-2">{item.screenSize} • {item.type}</p>
                       <div className="flex justify-between items-center">
                         <div className="flex items-center bg-white rounded-lg border border-slate-200">
                           <button onClick={() => updateQuantity(item.id, -1)} className="px-3 py-1 hover:bg-slate-50">-</button>

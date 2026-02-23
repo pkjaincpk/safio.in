@@ -13,16 +13,16 @@ interface StorefrontProps {
 
 const Storefront: React.FC<StorefrontProps> = ({ products, addToCart, openCart, cartCount }) => {
   const [selectedBrand, setSelectedBrand] = useState(BRANDS[0].brand);
-  const [selectedModel, setSelectedModel] = useState(BRANDS[0].models[0]);
+  const [selectedScreenSize, setSelectedScreenSize] = useState(BRANDS[0].screenSizes[0]);
   const [filterType, setFilterType] = useState<'All' | 'Privacy' | 'Blue Light' | 'Self-Healing'>('All');
 
   const handleAddToCart = (product: Product) => {
     addToCart({
-      id: `${product.id}-${selectedModel}`,
+      id: `${product.id}-${selectedScreenSize}`,
       productId: product.id,
       productName: product.name,
       type: product.type,
-      model: selectedModel,
+      screenSize: selectedScreenSize,
       price: product.basePrice,
       quantity: 1,
       imageUrl: product.imageUrl
@@ -60,19 +60,19 @@ const Storefront: React.FC<StorefrontProps> = ({ products, addToCart, openCart, 
                 onChange={(e) => {
                   setSelectedBrand(e.target.value);
                   const brand = BRANDS.find(b => b.brand === e.target.value);
-                  if (brand) setSelectedModel(brand.models[0]);
+                  if (brand) setSelectedScreenSize(brand.screenSizes[0]);
                 }}
                 className="bg-transparent text-white p-3 outline-none cursor-pointer border-r border-white/10"
               >
                 {BRANDS.map(b => <option key={b.brand} value={b.brand} className="text-black font-bold">{b.brand}</option>)}
               </select>
               <select 
-                value={selectedModel} 
-                onChange={(e) => setSelectedModel(e.target.value)}
+                value={selectedScreenSize} 
+                onChange={(e) => setSelectedScreenSize(e.target.value)}
                 className="bg-transparent text-white p-3 outline-none cursor-pointer"
               >
-                {BRANDS.find(b => b.brand === selectedBrand)?.models.map(m => (
-                  <option key={m} value={m} className="text-black font-bold">{m}</option>
+                {BRANDS.find(b => b.brand === selectedBrand)?.screenSizes.map(s => (
+                  <option key={s} value={s} className="text-black font-bold">{s} Screen</option>
                 ))}
               </select>
             </div>
@@ -111,7 +111,7 @@ const Storefront: React.FC<StorefrontProps> = ({ products, addToCart, openCart, 
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <div>
             <h2 className="text-3xl font-bold mb-2">Safio.in {selectedBrand} Collection</h2>
-            <p className="text-slate-500">Selected for: <span className="text-red-600 font-semibold">{selectedModel}</span></p>
+            <p className="text-slate-500">Selected Size: <span className="text-red-600 font-semibold">{selectedScreenSize}</span></p>
           </div>
           <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
             {['All', 'Privacy', 'Blue Light', 'Self-Healing'].map((filter: any) => (
@@ -129,7 +129,7 @@ const Storefront: React.FC<StorefrontProps> = ({ products, addToCart, openCart, 
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {filteredProducts.map(product => {
-              const stockLevel = product.stock[selectedModel] || 0;
+              const stockLevel = product.stock[selectedScreenSize] || 0;
               return (
                 <div key={product.id} className="group bg-white rounded-3xl border border-slate-100 overflow-hidden transition-all hover:shadow-2xl hover:-translate-y-1">
                   <div className="relative h-64 overflow-hidden">
@@ -151,7 +151,7 @@ const Storefront: React.FC<StorefrontProps> = ({ products, addToCart, openCart, 
                     )}
                     {stockLevel === 0 && (
                       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center">
-                        <span className="bg-white text-slate-900 px-4 py-2 rounded-full font-bold">Out of Stock for {selectedModel}</span>
+                        <span className="bg-white text-slate-900 px-4 py-2 rounded-full font-bold">Out of Stock for {selectedScreenSize}</span>
                       </div>
                     )}
                   </div>

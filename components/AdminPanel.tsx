@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Package, TrendingUp, Users, Settings, Plus, LayoutDashboard, Search, Bell, X, Laptop, LogOut, ShieldCheck, Key, Save, CheckCircle, Image as ImageIcon, Edit2, Trash2, ChevronRight, PlusCircle, Bookmark } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Package, TrendingUp, Users, Settings, Plus, LayoutDashboard, Search, Bell, X, Laptop, LogOut, ShieldCheck, Key, Save, CheckCircle, Image as ImageIcon, Edit2, Trash2, ChevronRight, PlusCircle, Bookmark, RefreshCw, Eraser } from 'lucide-react';
 import { Product, GuardType } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { BRANDS } from '../constants';
 
 interface AdminPanelProps {
   products: Product[];
-  updateStock: (productId: string, model: string, newStock: number) => void;
+  updateStock: (productId: string, screenSize: string, newStock: number) => void;
   addProduct: (product: Product) => void;
   editProduct: (product: Product) => void;
   onLogout?: () => void;
@@ -28,9 +28,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState(false);
   
+  const urlInputRef = useRef<HTMLInputElement>(null);
+
   // Stock Modal Local State
-  const [newModelName, setNewModelName] = useState('');
-  const [selectedPresetModel, setSelectedPresetModel] = useState('');
+  const [newScreenSize, setNewScreenSize] = useState('');
+  const [selectedPresetSize, setSelectedPresetSize] = useState('');
 
   // Form States for Add/Edit Product
   const [formState, setFormState] = useState({
@@ -87,8 +89,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
   const openStockModal = (product: Product) => {
     setActiveStockProductId(product.id);
     setIsStockModalOpen(true);
-    setNewModelName('');
-    setSelectedPresetModel('');
+    setNewScreenSize('');
+    setSelectedPresetSize('');
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {
@@ -128,20 +130,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
     setIsModalOpen(false);
   };
 
-  const handleAddNewModelStock = (productId: string, model: string) => {
-    const trimmedModel = model.trim();
-    if (!trimmedModel) return;
-    updateStock(productId, trimmedModel, 0);
-    setNewModelName('');
-    setSelectedPresetModel('');
+  const handleAddNewScreenSizeStock = (productId: string, size: string) => {
+    const trimmedSize = size.trim();
+    if (!trimmedSize) return;
+    updateStock(productId, trimmedSize, 0);
+    setNewScreenSize('');
+    setSelectedPresetSize('');
   };
 
-  const handleRemoveModel = (productId: string, model: string) => {
+  const handleRemoveScreenSize = (productId: string, size: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
     const newStock = { ...product.stock };
-    delete newStock[model];
+    delete newStock[size];
     editProduct({ ...product, stock: newStock });
+  };
+
+  const triggerImageChange = () => {
+    urlInputRef.current?.focus();
+    urlInputRef.current?.select();
   };
 
   return (
@@ -213,7 +220,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
                   { label: 'Total Revenue', value: '₹4,52,318', change: '+20.1%', icon: <TrendingUp className="text-green-600" /> },
                   { label: 'Active Orders', value: '128', change: '+12', icon: <Package className="text-blue-600" /> },
                   { label: 'Total Customers', value: '2,400', change: '+180', icon: <Users className="text-purple-600" /> },
-                  { label: 'Stock Alerts', value: `${products.filter(p => Object.values(p.stock).some(s => s < 5)).length} Low`, change: '-2', icon: <Package className="text-red-600" /> },
+                  { label: 'Stock Alerts', value: `${products.filter(p => (Object.values(p.stock) as number[]).some(s => s < 5)).length} Low`, change: '-2', icon: <Package className="text-red-600" /> },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                     <div className="flex justify-between mb-4">
@@ -287,7 +294,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
                   </thead>
                   <tbody className="divide-y text-sm">
                     {products.map(product => {
-                      const totalStock = Object.values(product.stock).reduce((a, b) => a + b, 0);
+                      const totalStock = (Object.values(product.stock) as number[]).reduce((a, b) => a + b, 0);
                       const modelCount = Object.keys(product.stock).length;
                       return (
                         <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
@@ -309,10 +316,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
                           <td className="px-6 py-4">
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${totalStock > 20 ? 'bg-green-500' : totalStock > 0 ? 'bg-orange-500' : 'bg-red-500'}`}></span>
+                                <span className={`w-2 h-2 rounded-full ${(totalStock as number) > 20 ? 'bg-green-500' : (totalStock as number) > 0 ? 'bg-orange-500' : 'bg-red-500'}`}></span>
                                 <span className="font-bold text-slate-700">{totalStock} Units Total</span>
                               </div>
-                              <p className="text-[10px] text-slate-400 font-bold">{modelCount} Models Supported</p>
+                              <p className="text-[10px] text-slate-400 font-bold">{modelCount} Sizes Supported</p>
                             </div>
                           </td>
                           <td className="px-6 py-4 font-black text-slate-900 italic">₹{product.basePrice.toLocaleString('en-IN')}</td>
@@ -354,7 +361,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
                   <Package className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Manage Model Stock</h2>
+                  <h2 className="text-lg font-black text-slate-900 uppercase tracking-tight">Manage Screen Size Stock</h2>
                   <p className="text-xs text-slate-500 font-medium">{activeStockProduct.name}</p>
                 </div>
               </div>
@@ -366,26 +373,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
             <div className="p-8 space-y-6 max-h-[60vh] overflow-y-auto no-scrollbar">
               {/* Add New Model Section */}
               <div className="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200 space-y-4">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Add Support for New Laptop Model</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Add Support for New Screen Size</label>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-[10px] text-slate-400 font-bold px-1 mb-1">Select Preset (By Brand)</p>
                     <select 
-                      value={selectedPresetModel}
+                      value={selectedPresetSize}
                       onChange={(e) => {
-                        setSelectedPresetModel(e.target.value);
-                        setNewModelName(''); 
+                        setSelectedPresetSize(e.target.value);
+                        setNewScreenSize(''); 
                       }}
                       className="w-full p-3 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 text-sm font-bold"
                     >
-                      <option value="">Choose from common models...</option>
+                      <option value="">Choose from common sizes...</option>
                       {BRANDS.map(brandGroup => (
                         <optgroup key={brandGroup.brand} label={brandGroup.brand}>
-                          {brandGroup.models
-                            .filter(m => !activeStockProduct.stock[m])
-                            .map(model => (
-                              <option key={model} value={model}>{model}</option>
+                          {brandGroup.screenSizes
+                            .filter(s => !activeStockProduct.stock[s])
+                            .map(size => (
+                              <option key={size} value={size}>{size}</option>
                             ))
                           }
                         </optgroup>
@@ -397,40 +404,40 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
                     <p className="text-[10px] text-slate-400 font-bold px-1 mb-1">Or Type Manually</p>
                     <input 
                       type="text" 
-                      value={newModelName}
+                      value={newScreenSize}
                       onChange={(e) => {
-                        setNewModelName(e.target.value);
-                        setSelectedPresetModel('');
+                        setNewScreenSize(e.target.value);
+                        setSelectedPresetSize('');
                       }}
-                      placeholder="e.g. Asus ROG Zephyrus G14"
+                      placeholder="e.g. 15.6 inch"
                       className="w-full p-3 rounded-xl bg-white border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 text-sm font-bold"
                     />
                   </div>
                 </div>
 
                 <button 
-                  onClick={() => handleAddNewModelStock(activeStockProduct.id, selectedPresetModel || newModelName)}
-                  disabled={!selectedPresetModel && !newModelName.trim()}
+                  onClick={() => handleAddNewScreenSizeStock(activeStockProduct.id, selectedPresetSize || newScreenSize)}
+                  disabled={!selectedPresetSize && !newScreenSize.trim()}
                   className="w-full bg-red-600 hover:bg-red-700 disabled:bg-slate-300 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
-                  <PlusCircle className="w-4 h-4" /> Add Model to Inventory
+                  <PlusCircle className="w-4 h-4" /> Add Size to Inventory
                 </button>
               </div>
 
               {/* Current Stock Table */}
               <div className="space-y-3">
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Inventory per Model</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Inventory per Screen Size</h4>
                 {Object.keys(activeStockProduct.stock).length === 0 ? (
                   <div className="text-center py-10 bg-slate-50 rounded-2xl border">
-                    <p className="text-sm text-slate-400 font-bold italic">No model stock records found. Add one above.</p>
+                    <p className="text-sm text-slate-400 font-bold italic">No size records found. Add one above.</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {Object.entries(activeStockProduct.stock).map(([model, count]) => (
-                      <div key={model} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:border-red-100 transition-colors group">
+                    {Object.entries(activeStockProduct.stock).map(([size, count]) => (
+                      <div key={size} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:border-red-100 transition-colors group">
                         <div className="flex-1">
-                          <p className="text-sm font-black text-slate-800">{model}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase">Laptop Model</p>
+                          <p className="text-sm font-black text-slate-800">{size}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase">Screen Size</p>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="relative">
@@ -438,13 +445,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
                               type="number"
                               min="0"
                               value={count}
-                              onChange={(e) => updateStock(activeStockProduct.id, model, parseInt(e.target.value) || 0)}
+                              onChange={(e) => updateStock(activeStockProduct.id, size, parseInt(e.target.value) || 0)}
                               className="w-24 pl-4 pr-10 py-2.5 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-red-500 font-black text-sm"
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">PCS</span>
                           </div>
                           <button 
-                            onClick={() => handleRemoveModel(activeStockProduct.id, model)}
+                            onClick={() => handleRemoveScreenSize(activeStockProduct.id, size)}
                             className="p-2 text-slate-300 hover:text-red-500 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -520,27 +527,62 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
                 <div className="col-span-2 md:col-span-1">
                   <label className="block font-bold text-slate-700 mb-2">Product Image</label>
                   <div className="space-y-4">
-                    <div className="relative group">
-                      <div className="w-full h-40 bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-300">
+                    <div 
+                      className="relative group cursor-pointer"
+                      onClick={triggerImageChange}
+                    >
+                      <div className="w-full h-40 bg-slate-100 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-300 transition-all hover:border-red-400">
                         {formState.imageUrl ? (
-                          <img src={formState.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                          <>
+                            <img src={formState.imageUrl} alt="Preview" className="w-full h-full object-cover group-hover:opacity-75 transition-opacity" />
+                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity">
+                              <RefreshCw className="w-8 h-8 mb-1 animate-spin-slow" />
+                              <span className="text-[10px] font-black uppercase tracking-widest">Change Image</span>
+                            </div>
+                            <div className="absolute top-2 right-2 bg-green-500 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-full shadow-sm">
+                              Live Preview
+                            </div>
+                          </>
                         ) : (
                           <div className="text-center text-slate-400">
                             <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                            <p className="text-xs font-bold">No image provided</p>
+                            <p className="text-xs font-bold">Paste URL to load image</p>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div>
-                      <input 
-                        required 
-                        type="url" 
-                        value={formState.imageUrl} 
-                        onChange={e => setFormState({...formState, imageUrl: e.target.value})} 
-                        placeholder="Paste Image URL..." 
-                        className="w-full p-3 text-xs rounded-xl bg-slate-100 border-none outline-none focus:ring-red-500 ring-2 ring-transparent transition-all font-medium" 
-                      />
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <input 
+                            ref={urlInputRef}
+                            required 
+                            type="url" 
+                            value={formState.imageUrl} 
+                            onChange={e => setFormState({...formState, imageUrl: e.target.value})} 
+                            placeholder="Paste Image URL..." 
+                            className="w-full p-3 text-xs rounded-xl bg-slate-100 border-none outline-none focus:ring-red-500 ring-2 ring-transparent transition-all font-medium pr-10" 
+                          />
+                          {formState.imageUrl && (
+                            <button 
+                              type="button"
+                              onClick={() => setFormState({...formState, imageUrl: ''})}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-red-500 transition-colors"
+                              title="Clear Image URL"
+                            >
+                              <Eraser className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={triggerImageChange}
+                          className="bg-slate-900 text-white px-3 rounded-xl hover:bg-slate-800 transition-colors"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-bold px-1 italic">Note: Use a direct link to a JPG/PNG/WebP file.</p>
                     </div>
                   </div>
                 </div>
