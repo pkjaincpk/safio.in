@@ -27,8 +27,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
   const [activeStockProductId, setActiveStockProductId] = useState<string | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState(false);
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    activeOrders: 0,
+    totalCustomers: 2400,
+    lowStockCount: 0
+  });
   
   const urlInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch('/api/stats')
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(err => console.error('Failed to fetch stats:', err));
+  }, [products]);
 
   // Stock Modal Local State
   const [newScreenSize, setNewScreenSize] = useState('');
@@ -217,10 +230,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ products, updateStock, addProdu
             <div className="space-y-8 animate-in fade-in duration-500">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {[
-                  { label: 'Total Revenue', value: '₹4,52,318', change: '+20.1%', icon: <TrendingUp className="text-green-600" /> },
-                  { label: 'Active Orders', value: '128', change: '+12', icon: <Package className="text-blue-600" /> },
-                  { label: 'Total Customers', value: '2,400', change: '+180', icon: <Users className="text-purple-600" /> },
-                  { label: 'Stock Alerts', value: `${products.filter(p => (Object.values(p.stock) as number[]).some(s => s < 5)).length} Low`, change: '-2', icon: <Package className="text-red-600" /> },
+                  { label: 'Total Revenue', value: `₹${stats.totalRevenue.toLocaleString('en-IN')}`, change: '+20.1%', icon: <TrendingUp className="text-green-600" /> },
+                  { label: 'Active Orders', value: stats.activeOrders.toString(), change: '+12', icon: <Package className="text-blue-600" /> },
+                  { label: 'Total Customers', value: stats.totalCustomers.toLocaleString(), change: '+180', icon: <Users className="text-purple-600" /> },
+                  { label: 'Stock Alerts', value: `${stats.lowStockCount} Low`, change: '-2', icon: <Package className="text-red-600" /> },
                 ].map((stat, i) => (
                   <div key={i} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                     <div className="flex justify-between mb-4">

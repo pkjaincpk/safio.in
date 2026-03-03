@@ -13,23 +13,21 @@ const App: React.FC = () => {
   const [view, setView] = useState<'store' | 'admin'>('store');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Persistence (Mock)
+  // Fetch products from backend
   useEffect(() => {
-    const saved = localStorage.getItem('safio_products');
-    if (saved) setProducts(JSON.parse(saved));
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => setProducts(data))
+      .catch(err => console.error('Failed to fetch products:', err));
     
     // Check if was authenticated in this session
     const auth = sessionStorage.getItem('safio_auth');
     if (auth === 'true') setIsAuthenticated(true);
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('safio_products', JSON.stringify(products));
-  }, [products]);
 
   const handleAdminClick = () => {
     if (view === 'admin') {
@@ -96,21 +94,78 @@ const App: React.FC = () => {
     setCart(prev => prev.filter(item => item.id !== id));
   };
 
-  const updateStock = (productId: string, screenSize: string, newStock: number) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === productId) {
-        return { ...p, stock: { ...p.stock, [screenSize]: newStock } };
+  const updateStock = async (productId: string, screenSize: string, newStock: number) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const updatedStock = { ...product.stock, [screenSize]: newStock };
+    
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock: updatedStock })
+      });
+      if (res.ok) {
+        const updatedProduct = await res.json();
+        setProducts(prev => prev.map(p => p.id === productId ? updatedProduct : p));
       }
-      return p;
-    }));
+    } catch (err) {
+      console.error('Failed to update stock:', err);
+    }
   };
 
-  const addProduct = (newProduct: Product) => {
-    setProducts(prev => [...prev, newProduct]);
+  const addProduct = async (newProduct: Product) => {
+    try {
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct)
+      });
+      if (res.ok) {
+        const savedProduct = await res.json();
+        setProducts(prev => [...prev, savedProduct]);
+      }
+    } catch (err) {
+      console.error('Failed to add product:', err);
+    }
   };
 
-  const editProduct = (updatedProduct: Product) => {
-    setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+  const editProduct = async (updatedProduct: Product) => {
+    try {
+      const res = await fetch(`/api/products/${updatedProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedProduct)
+      });
+      if (res.ok) {
+        const savedProduct = await res.json();
+        setProducts(prev => prev.map(p => p.id === savedProduct.id ? savedProduct : p));
+      }
+    } catch (err) {
+      console.error('Failed to edit product:', err);
+    }
+  };
+
+  const placeOrder = async (orderData: any) => {
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+      if (res.ok) {
+        // Refresh products to get updated stock
+        const productsRes = await fetch('/api/products');
+        const productsData = await productsRes.json();
+        setProducts(productsData);
+        setCart([]);
+        return true;
+      }
+    } catch (err) {
+      console.error('Failed to place order:', err);
+    }
+    return false;
   };
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -188,6 +243,7 @@ const App: React.FC = () => {
         updateQuantity={updateCartQuantity}
         removeItem={removeFromCart}
         clearCart={() => setCart([])}
+        onCheckout={placeOrder}
       />
 
       {view === 'store' && <AIAssistant />}

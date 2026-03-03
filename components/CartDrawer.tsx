@@ -10,9 +10,10 @@ interface CartDrawerProps {
   updateQuantity: (id: string, delta: number) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
+  onCheckout?: (orderData: any) => Promise<boolean>;
 }
 
-const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, updateQuantity, removeItem, clearCart }) => {
+const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, updateQuantity, removeItem, clearCart, onCheckout }) => {
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -20,11 +21,22 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, items, updateQ
     setStep('checkout');
   };
 
-  const handlePayment = () => {
-    setTimeout(() => {
-      setStep('success');
-      clearCart();
-    }, 1500);
+  const handlePayment = async () => {
+    if (onCheckout) {
+      const success = await onCheckout({
+        items,
+        total,
+        customerEmail: 'customer@example.com' // Mocked
+      });
+      if (success) {
+        setStep('success');
+      }
+    } else {
+      setTimeout(() => {
+        setStep('success');
+        clearCart();
+      }, 1500);
+    }
   };
 
   if (!isOpen) return null;
